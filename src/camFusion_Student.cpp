@@ -153,38 +153,28 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {   
-    double prev_1stshortest = 1000;
-    double prev_2ndshortest = 1000;
-    double prev_shortest;
-    for (auto prev_pt :lidarPointsPrev){
-        if (prev_pt.x < prev_1stshortest)
-            prev_1stshortest = prev_pt.x;
-        if (prev_pt.x < prev_2ndshortest && prev_pt.x > prev_1stshortest)
-            prev_2ndshortest = prev_pt.x;
+    double road_w = 3.5;
+    std::vector<double> preceding_dist_prev;
+    for (auto pt : lidarPointsPrev){
+        if (abs(pt.y) < road_w/2){
+            preceding_dist_prev.push_back(pt.x);
+        }
     }
-    // Get rid of the top outlier
-    if (abs(prev_2ndshortest-prev_1stshortest <= 0.1))
-        prev_shortest = prev_1stshortest;
-    else
-        prev_shortest = prev_2ndshortest;
+    std::sort(preceding_dist_prev.begin(), preceding_dist_prev.end());
+    int med_prev_pt_ind = floor(preceding_dist_prev.size()/2);
+    double median_prev = preceding_dist_prev[med_prev_pt_ind].x;
 
-    double curr_1stshortest = 1000;
-    double curr_2ndshortest = 1000;
-    double curr_shortest;
-    for (auto curr_pt :lidarPointsCurr){
-        if (curr_pt.x < curr_1stshortest)
-            curr_1stshortest = curr_pt.x;
-        if (curr_pt.x < curr_2ndshortest && curr_pt.x > curr_1stshortest)
-            curr_2ndshortest = curr_pt.x;
+    std::vector<double> preceding_dist_curr;
+    for (auto pt : lidarPointsCurr){
+        if (abs(pt.y) < road_w/2){
+            preceding_dist_curr.push_back(pt.x);
+        }
     }
-    // Get rid of the top outlier
-    if (abs(curr_2ndshortest-curr_1stshortest <= 0.1))
-        curr_shortest = curr_1stshortest;
-    else
-        curr_shortest = curr_2ndshortest;
+    std::sort(preceding_dist_curr.begin(), preceding_dist_curr.end());
+    int med_curr_pt_ind = floor(preceding_dist_curr.size()/2);
+    double median_curr = preceding_dist_curr[med_curr_pt_ind].x;
 
-    TTC = curr_shortest * frameRate/(prev_shortest - curr_shortest);
-    
+    TTC = median_curr / frameRate * (median_prev - median_curr);
 }
 
 
