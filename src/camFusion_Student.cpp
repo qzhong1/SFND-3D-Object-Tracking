@@ -137,22 +137,77 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
-{
-    // ...
+{   
+    // Calculate the median of the euclidean distance between matched pairs
+    std::vector<double> euclidean_dist;
+    double tolerance = 2;
+    for (auto match : kptMatches){
+        if (boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)){
+            double dist = cv::norm(kptsPrev[match.queryIdx].pt - kptsCurr[match.trainIdx].pt);
+            euclidean_dist.push_back(dist);
+        }
+    }
+    std::sort(euclidean_dist.begin(), euclidean_dist.end());
+    int pt_ind = floor(euclidean_dist.size()/2);
+    double median = euclidean_dist[pt_ind];
+
+    for (auto match : kptMatches){
+        if (boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)){
+            double euclidean_dist = cv::norm(kptsPrev[match.queryIdx].pt - kptsCurr[match.trainIdx].pt);
+            if (abs(euclidean_dist - median) < tolerance)
+                boundingBox.kptMatches.push_back(match);
+                boundingBox.keypoints.push_back(kptsCurr[match.trainIdx]);
+        }
+    }
+
+
 }
 
 
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
-{
-    // ...
+{   
+    // Get all the inliers
+    std::vector<cv::Point2f> inlier_kptsPrev_pt;
+    std::vector<cv::Point2f> inlier_kptsCurr_pt;
+    for (auto match : kptMatches){
+        inlier_kptsCurr_pt.push_back(kptsCurr[match.trainIdx].pt);
+        inlier_kptsPrev_pt.push_back(kptsPrev[match.queryIdx].pt);
+    }
+    // Find the keypoints in one frame with the furthest distance
+    std::vector<double> euclidean_dist_curr;
+    for (auto it = inlier_kptsCurr_pt.begin(); it!= inlier_kptsCurr_pt.end(); it++){
+        for (auto it2 = it; it2!= inlier_kptsCurr_pt.end(); it2++){
+            double dist = cv::norm((*it) - (*it2));
+            euclidean_dist_curr.push_back(dist);
+        }
+    }
+    std::sort(euclidean_dist_curr.begin(), euclidean_dist_curr.end());
+
+    std::vector<double> euclidean_dist_prev;
+    for (auto it = inlier_kptsPrev_pt.begin(); it!= inlier_kptsPrev_pt.end(); it++){
+        for (auto it2 = it; it2!= inlier_kptsPrev_pt.end(); it2++){
+            double dist = cv::norm((*it) - (*it2));
+            euclidean_dist_prev.push_back(dist);
+        }
+    }
+    std::sort(euclidean_dist_prev.begin(), euclidean_dist_prev.end());
+
+    // Use median of the distance
+    int median_ind_curr = floor(euclidean_dist_curr.size()/2);
+    int median_ind_prev = floor(euclidean_dist_prev.size()/2);
+    double median_curr = euclidean_dist_curr[median_ind_curr];
+    double median_prev = euclidean_dist_prev[median_ind_prev];
+
+    TTC = -1 / frameRate * (1 - median_curr/median_prev);
 }
 
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {   
+    // Use median to calculate the TTC for more robustness
     double road_w = 3.5;
     std::vector<double> preceding_dist_prev;
     for (auto pt : lidarPointsPrev){
@@ -162,7 +217,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     }
     std::sort(preceding_dist_prev.begin(), preceding_dist_prev.end());
     int med_prev_pt_ind = floor(preceding_dist_prev.size()/2);
-    double median_prev = preceding_dist_prev[med_prev_pt_ind].x;
+    double median_prev = preceding_dist_prev[med_prev_pt_ind];
 
     std::vector<double> preceding_dist_curr;
     for (auto pt : lidarPointsCurr){
@@ -172,7 +227,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     }
     std::sort(preceding_dist_curr.begin(), preceding_dist_curr.end());
     int med_curr_pt_ind = floor(preceding_dist_curr.size()/2);
-    double median_curr = preceding_dist_curr[med_curr_pt_ind].x;
+    double median_curr = preceding_dist_curr[med_curr_pt_ind];
 
     TTC = median_curr / frameRate * (median_prev - median_curr);
 }
