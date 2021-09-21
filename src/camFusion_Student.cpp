@@ -235,14 +235,13 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {   
-    
     // Loop through all keypoint matches
     for (auto it_prev : prevFrame.boundingBoxes){
         int match_key = 0;
-        int match_key_com = 0;
         std::pair<int, int> best;
         // Loop through all bounding boxes in prevFrame
         for (auto it_curr : currFrame.boundingBoxes){
+            int match_key_com = 0;
             for (auto it_match : matches){
                 cv::KeyPoint prev_keypoint = prevFrame.keypoints[it_match.queryIdx]; 
                 cv::KeyPoint curr_keypoint = currFrame.keypoints[it_match.trainIdx];
