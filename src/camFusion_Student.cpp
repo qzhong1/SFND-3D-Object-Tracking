@@ -200,7 +200,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     double median_curr = euclidean_dist_curr[median_ind_curr];
     double median_prev = euclidean_dist_prev[median_ind_prev];
 
-    TTC = -1 / frameRate * (1 - median_curr/median_prev);
+    TTC = -1 / (frameRate * (1 - median_curr/median_prev));
 }
 
 
@@ -229,7 +229,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     int med_curr_pt_ind = floor(preceding_dist_curr.size()/2);
     double median_curr = preceding_dist_curr[med_curr_pt_ind];
 
-    TTC = median_curr / frameRate * (median_prev - median_curr);
+    TTC = median_curr / (frameRate * (median_prev - median_curr));
 }
 
 
