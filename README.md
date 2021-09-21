@@ -32,4 +32,15 @@ In this final project, you will implement the missing parts in the schematic. To
 3. Compile: `cmake .. && make`
 4. Run it: `./3D_object_tracking`.
 
-## Rubic Points
+## Rubric Points
+* FP.1 Match 3D Objects
+  * In order to match bounding boxes in the previous and the current frame, each of the bounding boxes in both frames are iterated over to check for all the matched pairs found by descriptor matching. The bounding boxes pair with the highest number of keypoints matched pairs are considered the best matches. The best matches are used for following tasks.
+* FP.2 Compute Lidar-based TTC
+  * The equation from the lecture was used to compute Lidar based TTC. We need to find out the distance from the ego vehicle to the preceding vehicle according to the lidar point cloud. First, all lidar points which didn't fall within the ego lane is dismissed. Then, in order to be more robust against outliers, the median of the whole point cloud x measurements were used. It'll be less robust if the mean is used as mean is subject to more influence of the outliers.
+* FP.3 Associate Keypoint Correspondences with Bounding Boxes
+  * Outliers are removed based on eculidean distance. The median of the eculidean distance for all the keypoints are calculated. Then a tolerance is set. For any keypoint that's beyond the tolerance, it's dismissed. 
+* FP.4 Compute Camera-based TTC
+  * The scale change of the preceding vehicle between the previous and current frame is used to compute camera-based TTC. After all the outliers are removed, the eculidean distance of all the keypoints in both frames are calculated. The median distance is used for a more robust result.
+* FP.5 Performance Evaluation 1
+  * The TTC for both camera and lidar has been plotted in a separated image. 
+* FP.6 Performance Evaluation 2
