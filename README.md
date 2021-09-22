@@ -42,5 +42,6 @@ In this final project, you will implement the missing parts in the schematic. To
 * FP.4 Compute Camera-based TTC
   * The scale change of the preceding vehicle between the previous and current frame is used to compute camera-based TTC. After all the outliers are removed, the eculidean distance of all the keypoints in both frames are calculated. The median distance is used for a more robust result.
 * FP.5 Performance Evaluation 1
-  * The TTC for both camera and lidar has been plotted in a separated image. 
+  * The TTC for both camera and lidar has been recorded and plotted in an excel named "TTC Camera and Lidar.xlsx". Based on the plotting for xmin throughout the time, it can be seen that there isn't sudden change of relative speed between the ego and preceding vehicle. The measured Lidar TTC decreases in the overall trend. However the measurements at frame 5 and 6 seems off. They are represented by the sudden jump up on the plot. 
+  * This might have happened because of inaccurate time interval. We used frame rate in this case, which is constant for all the frames. However in reality the frame rate of any sensor is not perfectly constant. 
 * FP.6 Performance Evaluation 2
